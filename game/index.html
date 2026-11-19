@@ -3,17 +3,84 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Block Dodger</title>
+<title>Solmar Bay — An Open-World Crime Story</title>
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js" } }
+</script>
 <style>
-  html, body { margin: 0; height: 100%; overflow: hidden; background: #11141b; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1a2a3a; font-family: Arial, Helvetica, sans-serif; }
   #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
-  /* Read aloud, never shown: the status line screen readers announce. */
   #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  #hud { position: fixed; inset: 0; pointer-events: none; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.8); z-index: 5; }
+  #hud.title-mode #hud-top-right, #hud.title-mode #hud-bottom-left, #hud.title-mode #hud-bottom-right, #hud.title-mode #hint-bar, #hud.title-mode #police-panel { display: none; }
+  #hud.menu-open #hud-bottom-left, #hud.menu-open #hud-top-right { display: none; }
+  .hidden { display: none !important; }
+  #hud-top-left { position: absolute; top: 14px; left: 16px; max-width: 430px; }
+  #mission-card { background: rgba(10,16,24,.72); border-left: 4px solid #ffd23c; border-radius: 6px; padding: 10px 14px; }
+  #mission-title { font-weight: bold; font-size: 17px; color: #ffd23c; }
+  #mission-label { font-size: 15px; margin-top: 4px; }
+  #mission-timer { font-size: 14px; color: #ff8a5c; margin-top: 2px; }
+  #objective-hint { margin-top: 8px; font-size: 14px; color: #aef2c0; font-weight: bold; }
+  #hud-top-right { position: absolute; top: 14px; right: 16px; text-align: right; }
+  #wanted-stars { font-size: 26px; letter-spacing: 2px; }
+  #wanted-stars .star { color: rgba(255,255,255,.28); }
+  #wanted-stars .star.lit { color: #ffd23c; }
+  #money-line { font-size: 24px; font-weight: bold; color: #7dff9b; }
+  #respect-line { font-size: 14px; color: #ffd23c; }
+  #police-panel { position: absolute; top: 118px; right: 16px; width: 250px; background: rgba(8,12,28,.78); border: 1px solid #446; border-radius: 6px; padding: 8px 10px; font-size: 13px; }
+  .panel-head { font-weight: bold; color: #7db4ff; letter-spacing: 1px; margin-bottom: 5px; font-size: 12px; }
+  .unit-row { display: flex; justify-content: space-between; gap: 8px; padding: 2px 0; }
+  .unit-role { color: #ffb14d; }
+  .unit-dist { color: #aef2c0; }
+  #hud-bottom-left { position: absolute; left: 16px; bottom: 16px; }
+  #minimap { border: 2px solid rgba(255,255,255,.65); border-radius: 50%; background: #16281c; display: block; }
+  #minimap-label { text-align: center; font-size: 11px; letter-spacing: 2px; margin-top: 4px; color: #e8e8e8; }
+  #hud-bottom-right { position: absolute; right: 16px; bottom: 16px; text-align: right; }
+  #speed-line { font-size: 34px; font-weight: bold; }
+  #speed-line .unit { font-size: 14px; color: #ddd; }
+  #weapon-line, #radio-line { font-size: 14px; margin-top: 2px; }
+  #radio-line { color: #ffb1e8; }
+  #dialog-bar { position: absolute; left: 50%; bottom: 110px; transform: translateX(-50%); max-width: 720px; background: rgba(0,0,0,.68); border-radius: 8px; padding: 10px 18px; font-size: 17px; text-align: center; }
+  #banner { position: absolute; left: 50%; top: 34%; transform: translate(-50%,-50%); text-align: center; }
+  #banner-title { font-size: 52px; font-weight: bold; letter-spacing: 4px; }
+  #banner-sub { font-size: 19px; margin-top: 6px; }
+  #crosshair { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 26px; color: #fff; }
+  #vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(255,0,0,.55) 100%); opacity: 0; transition: opacity .2s; }
+  #hint-bar { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); font-size: 12px; color: rgba(255,255,255,.75); white-space: nowrap; }
+  #menu-screen { position: absolute; inset: 0; background: rgba(6,10,18,.55); display: flex; align-items: center; justify-content: center; pointer-events: auto; overflow-y: auto; }
+  .menu-panel { background: rgba(10,16,28,.92); border: 1px solid #445; border-radius: 12px; padding: 28px 34px; width: 560px; max-width: 92vw; box-shadow: 0 12px 50px rgba(0,0,0,.6); }
+  .wide-panel { width: 980px; }
+  .title-panel { text-align: center; width: 640px; }
+  .game-logo { font-size: 64px; font-weight: bold; letter-spacing: 6px; color: #ffd23c; line-height: 1; }
+  .game-tag { font-size: 18px; color: #7db4ff; margin-top: 8px; }
+  .game-sub { font-size: 15px; color: #ddd; margin-top: 10px; }
+  .menu-title { font-size: 34px; font-weight: bold; letter-spacing: 3px; color: #ffd23c; margin-bottom: 14px; }
+  .menu-title.red { color: #ff5544; }
+  .menu-sub { font-size: 14px; color: #ccc; margin: 10px 0; }
+  .menu-buttons { display: flex; flex-direction: column; gap: 10px; margin: 18px 0; }
+  .menu-buttons button, .slot-row button { pointer-events: auto; cursor: pointer; background: #ffd23c; color: #111; border: none; border-radius: 6px; padding: 11px 16px; font-size: 16px; font-weight: bold; }
+  .menu-buttons button:disabled, .slot-row button:disabled { background: #555; color: #999; cursor: default; }
+  .menu-buttons button:hover:not(:disabled), .slot-row button:hover:not(:disabled) { background: #ffe066; }
+  .menu-foot { font-size: 12px; color: #aaa; line-height: 1.6; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 18px; font-size: 14px; }
+  .stat-grid div { display: flex; justify-content: space-between; border-bottom: 1px solid #334; padding: 4px 0; }
+  .stat-grid span { color: #aaa; }
+  .slot-row { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,.06); border-radius: 6px; padding: 8px 10px; margin: 6px 0; font-size: 14px; }
+  .slot-row span:first-child { font-weight: bold; }
+  .slot-info { color: #aaa; flex: 1; font-size: 13px; }
+  .slot-row button { padding: 7px 12px; font-size: 13px; }
+  .map-row { display: flex; gap: 20px; align-items: flex-start; }
+  .map-side { flex: 1; min-width: 300px; }
+  #fullmap { border: 2px solid #445; border-radius: 8px; }
+  .controls-table div { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #223; font-size: 14px; }
+  .controls-table b { color: #ffd23c; }
+  .controls-table span { color: #ccc; }
 </style>
 </head>
 <body>
-<canvas id="game" aria-label="Block Dodger: move the paddle left and right to dodge falling blocks and catch coins"></canvas>
+<canvas id="game" aria-label="Solmar Bay: drive and walk around an open coastal city, steal cars, outrun the police and run story missions"></canvas>
 <p id="status" role="status" aria-live="polite"></p>
+<div id="hud"></div>
 <script type="module" src="./src/main.js"></script>
 </body>
 </html>

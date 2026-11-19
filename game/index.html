@@ -11,6 +11,9 @@
   html, body { margin: 0; height: 100%; overflow: hidden; background: #1a2a3a; font-family: Arial, Helvetica, sans-serif; }
   #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
   #status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  /* The HUD never intercepts mouse input (pointer-events: none), so every
+     click reaches the game canvas for shooting; only the menu screen and
+     its buttons opt back into pointer events. */
   #hud { position: fixed; inset: 0; pointer-events: none; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.8); z-index: 5; }
   #hud.title-mode #hud-top-right, #hud.title-mode #hud-bottom-left, #hud.title-mode #hud-bottom-right, #hud.title-mode #hint-bar, #hud.title-mode #police-panel { display: none; }
   #hud.menu-open #hud-bottom-left, #hud.menu-open #hud-top-right { display: none; }
@@ -45,6 +48,15 @@
   #banner-title { font-size: 52px; font-weight: bold; letter-spacing: 4px; }
   #banner-sub { font-size: 19px; margin-top: 6px; }
   #crosshair { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 26px; color: #fff; }
+  #weapon-wheel { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 300px; height: 300px; }
+  .wheel-title { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); font-size: 13px; letter-spacing: 3px; color: #ffd23c; font-weight: bold; text-align: center; }
+  #wheel-slots { position: absolute; inset: 0; }
+  .wheel-slot { position: absolute; transform: translate(-50%,-50%); width: 92px; text-align: center; background: rgba(8,14,24,.82); border: 2px solid #556; border-radius: 8px; padding: 6px 4px; font-size: 12px; }
+  .wheel-slot.selected { border-color: #ffd23c; background: rgba(60,44,8,.92); box-shadow: 0 0 14px rgba(255,210,60,.55); }
+  .wheel-slot .wheel-key { display: block; font-size: 11px; color: #7db4ff; font-weight: bold; }
+  .wheel-slot .wheel-name { display: block; font-size: 13px; font-weight: bold; margin-top: 1px; }
+  .wheel-slot .wheel-ammo { display: block; font-size: 11px; color: #aef2c0; }
+  .wheel-hint { position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%); font-size: 12px; color: #ddd; white-space: nowrap; }
   #vignette { position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(255,0,0,.55) 100%); opacity: 0; transition: opacity .2s; }
   #hint-bar { position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%); font-size: 12px; color: rgba(255,255,255,.75); white-space: nowrap; }
   #menu-screen { position: absolute; inset: 0; background: rgba(6,10,18,.55); display: flex; align-items: center; justify-content: center; pointer-events: auto; overflow-y: auto; }

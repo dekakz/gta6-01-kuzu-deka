@@ -122,6 +122,8 @@ export function createVehicleManager(scene, world, random) {
     addVehicle(CAR_MODELS[5], 160, 110, 0, { parked: true, color: 0x44484e });
   }
 
+  // Police cars are skipped here on purpose: E can steal parked and
+  // traffic cars, but never a pursuing unit's car.
   function nearestVehicle(x, z, maxDist, includeTraffic) {
     let best = null;
     let bestDist = maxDist;

@@ -151,7 +151,10 @@ export function createPolice(scene, world, random) {
       }
     }
 
-    // Spawn / despawn units to match the wanted level.
+    // Spawn / despawn units to match the wanted level. The helicopter only
+    // appears at 3+ stars and roadblocks at 4+ (WANTED in config.js), so a
+    // low-heat chase stays ground cars only. Spawns are throttled to one
+    // unit per 1.2s so the heat ramps instead of arriving all at once.
     spawnTimer -= dt;
     const wantCars = WANTED.copsPerLevel[wanted] || 0;
     const cars = units.filter((u) => u.kind === 'car').length;

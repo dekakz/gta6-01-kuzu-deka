@@ -8,7 +8,7 @@ An original open-world crime game for make.fun's **Make GTA 6** bounty
 (`gta6-01`), built as a static browser game: no build step, no network,
 three.js vendored under `game/vendor/`.
 
-Dario Vega came home to Solmar Bay with nothing. Eight story missions,
+Dario Vega came home to Solmar Bay with nothing. Twelve story missions,
 a five-star police department that actually hunts you, cars to steal,
 a garage to fill, shops, three synth radio stations and a whole
 sun-soaked coastal city to drive and walk — all in your browser.
@@ -37,7 +37,7 @@ roadblocks from 4.
 
 ## Systems
 
-- 8 story missions with stages, timers, dialog and rewards (money + respect ranks)
+- 12 story missions with stages, timers, dialog and rewards (money + respect ranks)
 - Wanted 1–5 with police cars, helicopter, roadblocks, Busted / Wasted
 - Combat: fists + 4 firearms, health, tracers, hostile thugs and guards
 - Money, respect ranks, garage upgrades (engine / armor / turbo), 3 shops
@@ -57,7 +57,7 @@ game/
     vehicles.js         cars, driving, traffic
     pedestrians.js      walkers + hostile thugs
     police.js           wanted, dispatch units, helicopter, roadblocks
-    missions.js         8-mission story stage machine
+    missions.js         12-mission story stage machine
     combat.js           weapons, shooting, tracers
     pickups.js          cash, health, money drops
     audio.js            WebAudio synth: radio, engine, sirens, SFX

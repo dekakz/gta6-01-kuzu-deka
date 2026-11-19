@@ -64,6 +64,7 @@ createServer((request, response) => {
   response.writeHead(200, {
     'content-type': MIME[extname(file).toLowerCase()] ?? 'application/octet-stream',
     'content-length': size,
+    // No-store so an edit to game/ shows on the next refresh, not from cache.
     'cache-control': 'no-store',
   });
   createReadStream(file).pipe(response);

@@ -1,4 +1,4 @@
-// Story missions: an eight-mission arc for Dario Vega, run by a small
+// Story missions: a twelve-mission arc for Dario Vega, run by a small
 // stage machine. Each stage is one of goto / steal / deliver / fight /
 // survive / escape / collect, with dialog, an optional timer and a
 // waypoint beacon. The manager owns progress, rewards and failure.

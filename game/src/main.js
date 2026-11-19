@@ -64,6 +64,9 @@ const game = {
   missions: null,
   hud: null,
   missionAutoTimer: 4,
+  camYaw: 0,
+  wheelOpen: false,
+  wheelSelected: 0,
 };
 
 game.missions = createMissionManager(game);
@@ -85,6 +88,11 @@ function announce(message) {
 }
 
 game.say = (text) => game.hud.say(text);
+game.wheelList = () => game.progress.weapons.map((key) => ({
+  key,
+  name: WEAPONS[key].name,
+  ammo: key === 'fists' ? '' : (game.progress.ammo[key] ?? 0),
+}));
 game.saveGame = (slot) => {
   const p = game.progress;
   p.playerX = game.player.x;
@@ -205,7 +213,16 @@ function resetPlayerToStart() {
   pl.mesh.position.set(pl.x, 0, pl.z);
 }
 
+function closeWheel() {
+  // The weapon wheel is an on-foot overlay: entering or leaving a car
+  // dismisses it instead of leaving it open over the driving view.
+  if (!game.wheelOpen) return;
+  game.wheelOpen = false;
+  game.hud.setWeaponWheel(false);
+}
+
 function enterCar(car) {
+  closeWheel();
   const pl = game.player;
   if (car.traffic || car.parked) {
     if (car.traffic) {
@@ -237,6 +254,7 @@ function enterCar(car) {
 }
 
 function exitCar() {
+  closeWheel();
   const pl = game.player;
   if (!pl.car) return;
   const car = pl.car;
@@ -290,7 +308,11 @@ function shootWeapon() {
     }
     game.progress.ammo[weaponKey] = ammo - 1;
   }
-  const origin = new THREE.Vector3(pl.x, 1.5, pl.z);
+  // The ray is horizontal, so its height must cross a target's solid mass:
+  // a ped's torso spans y 0.625-1.475 and a car's cabin 0.775-1.325, while
+  // y 1.5 threads the gap between the torso top and the head and clears
+  // every cabin roof — at 1.5 no shot could ever hit anything.
+  const origin = new THREE.Vector3(pl.x, 1.05, pl.z);
   const direction = new THREE.Vector3(Math.sin(pl.heading), 0, Math.cos(pl.heading)).normalize();
   const result = combat.shoot(origin, direction, weaponKey, peds.peds, police.units);
   audio.gunshot();
@@ -372,6 +394,56 @@ function stepGame(dt, input) {
     game.hud.say(`Weapon: ${WEAPONS[pl.weapon].name}`);
     audio.blip();
   }
+
+  // --- Mouse-look (right-drag): turn on foot, orbit the camera in a car.
+  const look = input.takeLookDelta();
+  if (look.dx !== 0) {
+    if (pl.onFoot) pl.heading += look.dx * 0.0032;
+    else game.camYaw = Math.max(-1.4, Math.min(1.4, game.camYaw + look.dx * 0.0032));
+  }
+  // The camera orbit eases back to centre when the mouse is still.
+  if (pl.inCar && look.dx === 0 && game.camYaw !== 0) {
+    game.camYaw -= game.camYaw * Math.min(1, dt * 0.6);
+    if (Math.abs(game.camYaw) < 0.01) game.camYaw = 0;
+  }
+
+  // --- Weapon wheel (hold Tab): mouse angle picks a slot, release equips.
+  const ownedWeapons = game.progress.weapons;
+  if (input.wheelHeld() && !game.wheelOpen && pl.onFoot) {
+    game.wheelOpen = true;
+    game.wheelSelected = Math.max(0, ownedWeapons.indexOf(pl.weapon));
+    game.hud.setWeaponWheel(true, game.wheelList(), game.wheelSelected);
+  }
+  if (game.wheelOpen) {
+    if (!input.wheelHeld()) {
+      const picked = ownedWeapons[game.wheelSelected];
+      if (picked && picked !== pl.weapon) {
+        pl.weapon = picked;
+        game.hud.say(`Weapon: ${WEAPONS[pl.weapon].name}`);
+        audio.blip();
+      }
+      game.wheelOpen = false;
+      game.hud.setWeaponWheel(false);
+    } else {
+      const mp = input.mousePos();
+      const dx = mp.x - window.innerWidth / 2;
+      const dy = mp.y - window.innerHeight / 2;
+      if (Math.hypot(dx, dy) > 40) {
+        let angle = Math.atan2(dy, dx) + Math.PI / 2;
+        if (angle < 0) angle += Math.PI * 2;
+        const sector = Math.floor((angle / (Math.PI * 2)) * ownedWeapons.length) % ownedWeapons.length;
+        if (sector !== game.wheelSelected) {
+          game.wheelSelected = sector;
+          game.hud.setWeaponWheel(true, game.wheelList(), game.wheelSelected);
+        }
+      }
+      const digit = slot > 0 ? slot - 1 : -1;
+      if (digit >= 0 && digit < ownedWeapons.length && digit !== game.wheelSelected) {
+        game.wheelSelected = digit;
+        game.hud.setWeaponWheel(true, game.wheelList(), game.wheelSelected);
+      }
+    }
+  }
   if (actions & ACTION_ENTER) {
     if (pl.inCar) {
       exitCar();
@@ -409,7 +481,7 @@ function stepGame(dt, input) {
   // the mouse is held.
   const weaponDef = WEAPONS[pl.weapon];
   const shootHeld = weaponDef.auto && input.mouseHeld();
-  if (((actions & ACTION_SHOOT) || shootHeld) && pl.onFoot && pl.weapon !== 'fists') {
+  if (((actions & ACTION_SHOOT) || shootHeld) && pl.onFoot && pl.weapon !== 'fists' && !game.wheelOpen) {
     shootWeapon();
   }
   if (pl.onFoot && pl.weapon === 'fists' && (actions & ACTION_SHOOT)) {
@@ -577,7 +649,7 @@ function stepGame(dt, input) {
 
   // --- Camera + render
   const speedRatio = pl.inCar && pl.car ? Math.min(1, Math.abs(pl.car.speed) / 50) : Math.min(1, Math.abs(pl.speed) / 15);
-  renderer.follow(pl, dt, speedRatio);
+  renderer.follow(pl, dt, speedRatio, game.camYaw);
   renderer.update(dt, game.time, world);
   renderer.render();
 

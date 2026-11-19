@@ -5,6 +5,9 @@ import * as THREE from 'three';
 export function createPickups(scene, random) {
   const items = [];
 
+  // Collect stages count `taken` on the exact item objects returned here —
+  // the stage never re-scans by position, so a taken tray stays counted
+  // even after its mesh is removed from the scene.
   function spawnPickup(x, z, kind) {
     const color = kind === 'cash' ? 0x2fae4e : kind === 'health' ? 0xff5544 : 0xffd23c;
     const mesh = new THREE.Mesh(

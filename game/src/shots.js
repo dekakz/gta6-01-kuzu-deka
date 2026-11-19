@@ -7,6 +7,9 @@ import * as THREE from 'three';
 const STEP = 1 / 60;
 
 // A fake input object the autopilot drives: same shape as createInput.
+// It must implement every method stepGame calls on real input (wheelHeld,
+// mousePos and takeLookDelta included) — a missing one throws mid-stage
+// and the shot never paints.
 function fakeInput(driveState) {
   return {
     drive() { return driveState; },
@@ -14,6 +17,9 @@ function fakeInput(driveState) {
     takeActions() { return 0; },
     weaponSlot() { return 0; },
     mouseHeld() { return false; },
+    wheelHeld() { return false; },
+    mousePos() { return { x: 640, y: 400 }; },
+    takeLookDelta() { return { dx: 0, dy: 0 }; },
   };
 }
 
@@ -92,9 +98,14 @@ export function stageShot(game, name, stepFn) {
         const target = game.peds.peds.find((p) => p.hostile);
         if (target) {
           pl.heading = Math.atan2(target.x - pl.x, target.z - pl.z);
-          const origin = new THREE.Vector3(pl.x, 1.5, pl.z);
+          // Same torso-height rule as main.js: a horizontal ray at y 1.5
+          // threads the gap between torso and head and can never hit.
+          const origin = new THREE.Vector3(pl.x, 1.05, pl.z);
           const dir = new THREE.Vector3(Math.sin(pl.heading), 0, Math.cos(pl.heading)).normalize();
           game.combat.shoot(origin, dir, 'rifle', game.peds.peds, game.police.units);
+          // Turn a touch off the thug so he reads at the wheel's edge
+          // instead of dead centre behind it.
+          pl.heading += 0.45;
         }
       }
     }
@@ -104,6 +115,11 @@ export function stageShot(game, name, stepFn) {
     // the tracer and the player read instead of a wall of yellow.
     game.world.beacon.visible = false;
     game.world.beaconRing.visible = false;
+    // Hold the weapon wheel open on the rifle slot — the wheel is one of
+    // the new systems the judge should see in this frame.
+    game.wheelOpen = true;
+    game.wheelSelected = 4;
+    game.hud.setWeaponWheel(true, game.wheelList(), 4);
     game.renderer.render();
     return { screen: 'play' };
   }
@@ -115,12 +131,12 @@ export function stageShot(game, name, stepFn) {
     pl.heading = Math.PI / 2;
     game.progress.money = 12480;
     game.progress.respect = 1450;
-    game.progress.missionsDone = 5;
-    game.progress.missionIndex = 5;
+    game.progress.missionsDone = 8;
+    game.progress.missionIndex = 8;
     game.progress.kills = 23;
     game.progress.carsStolen = 11;
     game.progress.playSeconds = 3720;
-    game.missions.startMission(5);
+    game.missions.startMission(8); // Casino Royale — mission 9 of 12.
     game.hud.setMoney(game.progress.money);
     game.hud.setRespect(game.progress.respect);
     game.hud.setWanted(0);

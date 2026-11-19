@@ -6,6 +6,8 @@ import { PALETTE } from './config.js';
 
 export function createRenderer(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  // Pixel ratio is capped at 2: on a retina/4K display the canvas would
+  // otherwise render at 4x the pixels and halve the frame rate for no visible gain.
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.shadowMap.enabled = false;
@@ -79,11 +81,15 @@ export function createRenderer(canvas) {
 
   // Third-person follow: behind and above the heading, lerped; the camera
   // looks a little ahead of the player so the road stays in frame.
-  function follow(player, dt, speedRatio) {
+  // `camYaw` is the mouse-look orbit offset (radians): in a car the camera
+  // swings around the car without turning it; on foot the player turns
+  // directly, so camYaw stays 0 there.
+  function follow(player, dt, speedRatio, camYaw = 0) {
+    const yaw = player.heading + camYaw;
     const dist = player.inCar ? 13 : 8.5;
     const height = player.inCar ? 5.2 : 4.2;
-    const tx = player.x - Math.sin(player.heading) * dist;
-    const tz = player.z - Math.cos(player.heading) * dist;
+    const tx = player.x - Math.sin(yaw) * dist;
+    const tz = player.z - Math.cos(yaw) * dist;
     const k = Math.min(1, dt * 5);
     camState.x += (tx - camState.x) * k;
     camState.z += (tz - camState.z) * k;

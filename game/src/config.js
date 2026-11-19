@@ -33,6 +33,8 @@ export const CAR = {
 
 export const WANTED = {
   max: 5,
+  // Wanted decays one star per decaySeconds, but only while no police unit
+  // can see the player (police.js) — hiding clears heat, time alone does not.
   decaySeconds: 14,
   copsPerLevel: [0, 2, 3, 4, 5, 6],
   heliFromLevel: 3,
@@ -93,7 +95,7 @@ export const SHOPS = [
 
 export const GARAGE = { x: -96, z: 96, name: "Lena's Garage" };
 
-// Mission roster: eight story missions. Stage types are handled by
+// Mission roster: twelve story missions. Stage types are handled by
 // missions.js: goto, steal, deliver, fight, survive, escape, collect.
 export const MISSION_DEFS = [
   {
@@ -171,6 +173,48 @@ export const MISSION_DEFS = [
     stages: [
       { type: 'survive', label: 'Survive the five-star storm', seconds: 75, x: 0, z: 0, radius: 40, dialog: 'LENA: The whole city is coming for you. Survive 75 seconds and Solmar is yours!' },
       { type: 'goto', label: 'Reach the Solmar Grand penthouse', x: 160, z: 96, radius: 8, dialog: 'LENA: The penthouse. The crown. Go take what is yours, King of Solmar.' },
+    ],
+  },
+  {
+    id: 9, title: 'Casino Royale', giver: 'The Professor',
+    brief: 'The Solmar Grand keeps its chips in the back room. Slip in, grab the trays and walk out before the alarm finds you.',
+    rewardMoney: 3200, rewardRespect: 300,
+    stages: [
+      { type: 'goto', label: 'Reach the Solmar Grand casino', x: 160, z: 96, radius: 9, dialog: 'PROFESSOR: Chips are in the back room, three trays. Quiet feet, Dario.' },
+      { type: 'collect', label: 'Grab the chip trays (0/3)', count: 3, x: 160, z: 96, radius: 12, dialog: 'PROFESSOR: Trays are on the table. Take them all.' },
+      { type: 'escape', label: 'Lose the cops — get your wanted level to zero', dialog: 'PROFESSOR: The alarm! Shake the heat, then meet me at the garage.' },
+      { type: 'goto', label: 'Meet the Professor at the garage', x: GARAGE.x, z: GARAGE.z, radius: 8, dialog: 'PROFESSOR: Three trays, no blood. You are a professional now.' },
+    ],
+  },
+  {
+    id: 10, title: 'Street Kings', giver: 'Lena Ortiz',
+    brief: 'A rival crew challenged the whole city to a street race: pier to lookout to garage, against the clock. No cops invited — they came anyway.',
+    rewardMoney: 2800, rewardRespect: 320,
+    stages: [
+      { type: 'goto', label: 'Start at the south pier', x: 224, z: 224, radius: 7, timer: 60, dialog: 'LENA: Pier first, 60 seconds. The whole city is watching, Vega.' },
+      { type: 'goto', label: 'Race to the north lookout', x: -224, z: -224, radius: 8, timer: 75, dialog: 'LENA: Lookout next! Do not lift off that gas pedal.' },
+      { type: 'deliver', label: 'Finish at Lena\'s garage', x: GARAGE.x, z: GARAGE.z, radius: 8, timer: 60, dialog: 'LENA: Home stretch! Garage, now — Street King!' },
+    ],
+  },
+  {
+    id: 11, title: 'The Shark\'s Debt', giver: 'Milo Reyes',
+    brief: 'The Shark Boys owe Milo for the boardwalk job and they pay in crates, not cash. Take the docks, take the crates.',
+    rewardMoney: 3800, rewardRespect: 380,
+    stages: [
+      { type: 'fight', label: 'Clear the dock crew (0/4)', count: 4, x: -224, z: 160, radius: 18, dialog: 'MILO: Four of them guarding my crates. The debt is due.' },
+      { type: 'collect', label: 'Collect the payment crates (0/3)', count: 3, x: -224, z: 160, radius: 24, dialog: 'MILO: Crates are the payment. Load them up.' },
+      { type: 'deliver', label: 'Deliver the crates to the garage', x: GARAGE.x, z: GARAGE.z, radius: 8, dialog: 'MILO: Debt paid. The Sharks will think twice next time.' },
+    ],
+  },
+  {
+    id: 12, title: 'The Last Sunset', giver: 'Lena Ortiz',
+    brief: 'One last job: the Shark boss\'s gold Comet GT sits at the Marina. Take it, take down his guards, and park it at the penthouse. Solmar Bay is yours.',
+    rewardMoney: 12000, rewardRespect: 1000,
+    stages: [
+      { type: 'steal', label: 'Steal the gold Comet GT at the Marina', x: 160, z: -160, radius: 6, dialog: 'LENA: Gold Comet, Marina valet. The Shark boss\'s pride. Take it.' },
+      { type: 'fight', label: 'Take down the Shark guards (0/4)', count: 4, x: 160, z: -160, radius: 18, dialog: 'GUARD: That car belongs to the boss!' },
+      { type: 'deliver', label: 'Park the Comet at the penthouse', x: 160, z: 96, radius: 9, dialog: 'LENA: The penthouse, Dario. Park it where the whole city can see it.' },
+      { type: 'survive', label: 'Hold the penthouse — survive 60 seconds', seconds: 60, x: 160, z: 96, radius: 40, dialog: 'LENA: They are coming for the crown. Hold it for 60 seconds and Solmar Bay is yours, forever.' },
     ],
   },
 ];

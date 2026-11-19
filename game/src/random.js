@@ -13,6 +13,8 @@ export function createRandom(seed) {
     range(min, max) {
       return min + this.next() * (max - min);
     },
+    // int() is inclusive on both ends: it rolls range(min, max + 1) and
+    // floors, so int(0, 5) can return 5 — unlike range(), which excludes max.
     int(min, max) {
       return Math.floor(this.range(min, max + 1));
     },

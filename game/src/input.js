@@ -16,24 +16,51 @@ export function createInput(canvas) {
   const pressed = new Set();
   let mouseDown = false;
   let mouseClicked = false;
+  let mouseX = window.innerWidth / 2;
+  let mouseY = window.innerHeight / 2;
+  let lookDX = 0;
+  let lookDY = 0;
+  let rightDrag = false;
 
   function onKeyDown(event) {
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.code)) event.preventDefault();
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space', 'Tab'].includes(event.code)) event.preventDefault();
     if (!event.repeat) pressed.add(event.code);
     keys.add(event.code);
   }
   function onKeyUp(event) {
     keys.delete(event.code);
   }
-  function onMouseDown() { mouseDown = true; mouseClicked = true; }
-  function onMouseUp() { mouseDown = false; }
-  function onBlur() { keys.clear(); }
+  function onMouseDown(event) {
+    if (event.button === 2) { rightDrag = true; return; }
+    mouseDown = true;
+    mouseClicked = true;
+  }
+  function onMouseUp(event) {
+    if (event.button === 2) { rightDrag = false; return; }
+    mouseDown = false;
+  }
+  function onMouseMove(event) {
+    mouseX = event.clientX;
+    mouseY = event.clientY;
+    // Mouse-look: right-drag orbits the view (pointer-locked movement
+    // also lands here). Deltas are consumed once per frame by takeLookDelta.
+    if (rightDrag || document.pointerLockElement === canvas) {
+      lookDX += event.movementX || 0;
+      lookDY += event.movementY || 0;
+    }
+  }
+  // Losing window focus clears every held key, so Alt-Tabbing away cannot
+  // leave W, Tab or a mouse drag stuck down when the player comes back.
+  function onBlur() { keys.clear(); rightDrag = false; }
+  function onContextMenu(event) { event.preventDefault(); }
 
   window.addEventListener('keydown', onKeyDown);
   window.addEventListener('keyup', onKeyUp);
   window.addEventListener('blur', onBlur);
   canvas.addEventListener('mousedown', onMouseDown);
   window.addEventListener('mouseup', onMouseUp);
+  window.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('contextmenu', onContextMenu);
 
   function was(code) {
     return pressed.has(code);
@@ -72,6 +99,21 @@ export function createInput(canvas) {
     weaponSlot() {
       for (let i = 1; i <= 5; i += 1) if (pressed.has(`Digit${i}`)) return i;
       return 0;
+    },
+    // Held while Tab is down — the weapon wheel stays open.
+    wheelHeld() {
+      return keys.has('Tab');
+    },
+    // Mouse position in window pixels (for wheel sector picking).
+    mousePos() {
+      return { x: mouseX, y: mouseY };
+    },
+    // Accumulated mouse-look deltas since the last call (consumed once).
+    takeLookDelta() {
+      const out = { dx: lookDX, dy: lookDY };
+      lookDX = 0;
+      lookDY = 0;
+      return out;
     },
     isDown(code) {
       return keys.has(code);

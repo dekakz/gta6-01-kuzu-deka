@@ -26,8 +26,9 @@ export function createHud(game) {
     <div id="dialog-bar" class="hidden"><span id="dialog-text"></span></div>
     <div id="banner" class="hidden"><div id="banner-title"></div><div id="banner-sub"></div></div>
     <div id="crosshair" class="hidden">+</div>
+    <div id="weapon-wheel" class="hidden"><div class="wheel-title">WEAPONS</div><div id="wheel-slots"></div><div class="wheel-hint">Mouse to aim a slot • release Tab to equip</div></div>
     <div id="vignette"></div>
-    <div id="hint-bar">WASD drive / walk &nbsp;•&nbsp; E enter car &nbsp;•&nbsp; F punch &nbsp;•&nbsp; Click shoot &nbsp;•&nbsp; 1-5 weapons &nbsp;•&nbsp; R radio &nbsp;•&nbsp; M map &nbsp;•&nbsp; Esc pause</div>
+    <div id="hint-bar">WASD drive / walk &nbsp;•&nbsp; E enter car &nbsp;•&nbsp; F punch &nbsp;•&nbsp; Click shoot &nbsp;•&nbsp; 1-5 weapons &nbsp;•&nbsp; Tab weapon wheel &nbsp;•&nbsp; Right-drag mouse-look &nbsp;•&nbsp; R radio &nbsp;•&nbsp; M map &nbsp;•&nbsp; Esc pause</div>
     <div id="menu-screen" class="hidden"></div>
   `;
 
@@ -95,6 +96,8 @@ export function createHud(game) {
     dialogTimer = window.setTimeout(() => bar.classList.add('hidden'), seconds * 1000);
   }
 
+  // Re-showing a banner clears the previous hide timer first, so a new
+  // banner always gets its full 3.6s instead of being cut short by the old one.
   function showBanner(title, sub, color = '#ffd23c') {
     const banner = $('banner');
     $('banner-title').textContent = title;
@@ -113,6 +116,26 @@ export function createHud(game) {
 
   function setCrosshair(show) {
     $('crosshair').classList.toggle('hidden', !show);
+  }
+
+  // Weapon wheel: radial picker shown while Tab is held. `weapons` is
+  // [{ key, name, ammo }]; `selected` is the highlighted slot index.
+  function setWeaponWheel(open, weapons, selected) {
+    const wheel = $('weapon-wheel');
+    if (!open || !weapons || weapons.length === 0) {
+      wheel.classList.add('hidden');
+      return;
+    }
+    wheel.classList.remove('hidden');
+    const slots = $('wheel-slots');
+    const n = weapons.length;
+    slots.innerHTML = weapons.map((w, i) => {
+      const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+      const x = 50 + Math.cos(angle) * 36;
+      const y = 50 + Math.sin(angle) * 36;
+      const ammo = w.ammo === '' || w.ammo === undefined ? '∞' : w.ammo;
+      return `<div class="wheel-slot ${i === selected ? 'selected' : ''}" style="left:${x}%;top:${y}%"><span class="wheel-key">${i + 1}</span><span class="wheel-name">${w.name}</span><span class="wheel-ammo">${ammo}</span></div>`;
+    }).join('');
   }
 
   // ---- Minimap: roads, blocks, sea, waypoint, police, player arrow.
@@ -234,7 +257,7 @@ export function createHud(game) {
       <div class="stat-grid">
         <div><span>Money</span><b>$${p.money.toLocaleString('en-US')}</b></div>
         <div><span>Respect</span><b>${p.respect} — ${respectRank(p.respect)}</b></div>
-        <div><span>Missions done</span><b>${p.missionsDone} / 8</b></div>
+        <div><span>Missions done</span><b>${p.missionsDone} / 12</b></div>
         <div><span>Kills</span><b>${p.kills}</b></div>
         <div><span>Cars stolen</span><b>${p.carsStolen}</b></div>
         <div><span>Time played</span><b>${Math.floor(p.playSeconds / 60)}m ${Math.floor(p.playSeconds % 60)}s</b></div>
@@ -244,7 +267,7 @@ export function createHud(game) {
   function saveSlotsHtml() {
     return game.save.list().map(({ slot, data }) => {
       const label = game.save.slotLabel(slot);
-      const info = data ? `$${data.money} • ${data.missionsDone}/8 missions • ${new Date(data.savedAt).toLocaleString()}` : 'Empty slot';
+      const info = data ? `$${data.money} • ${data.missionsDone}/12 missions • ${new Date(data.savedAt).toLocaleString()}` : 'Empty slot';
       return `<div class="slot-row"><span>${label}</span><span class="slot-info">${info}</span><button data-save="${slot}">Save here</button><button data-load="${slot}" ${data ? '' : 'disabled'}>Load</button></div>`;
     }).join('');
   }
@@ -262,7 +285,7 @@ export function createHud(game) {
             <button data-action="map">MAP &amp; STATS</button>
             <button data-action="settings">SETTINGS &amp; CONTROLS</button>
           </div>
-          <div class="menu-foot">WASD drive &amp; walk • E enter / steal car • F punch • Click shoot • 1–5 weapons • R radio • M map • Esc pause<br>8 story missions • 5-star police • garage, shops &amp; radio • saves in 3 slots</div>
+          <div class="menu-foot">WASD drive &amp; walk • E enter / steal car • F punch • Click shoot • 1–5 weapons • Tab weapon wheel • Right-drag mouse-look • R radio • M map • Esc pause<br>12 story missions • 5-star police • garage, shops &amp; radio • saves in 3 slots</div>
         </div>`;
     }
     if (kind === 'pause') {
@@ -335,6 +358,8 @@ export function createHud(game) {
             <div><b>F</b><span>Punch</span></div>
             <div><b>Mouse click</b><span>Shoot current weapon</span></div>
             <div><b>1 – 5</b><span>Switch weapon</span></div>
+            <div><b>Tab (hold)</b><span>Weapon wheel — mouse to pick, release to equip</span></div>
+            <div><b>Right-drag mouse</b><span>Mouse-look — turn on foot, orbit the camera in a car</span></div>
             <div><b>R</b><span>Next radio station</span></div>
             <div><b>M</b><span>Map, stats &amp; saves</span></div>
             <div><b>H</b><span>Horn</span></div>
@@ -405,6 +430,7 @@ export function createHud(game) {
   return {
     setWanted, setMoney, setRespect, setHealth, setSpeed, setWeapon, setRadio,
     setMission, setPolicePanel, say, showBanner, flashDamage, setCrosshair,
+    setWeaponWheel,
     drawMinimap, showMenu, getMenuKind,
   };
 }

@@ -221,6 +221,8 @@ export function buildWorld(scene, random) {
   }
 
   // Mission waypoint beacon: a glowing cylinder the game moves around.
+  // It is built once here and repositioned per stage by missions.js
+  // (moveBeacon) — never rebuilt, so the beacon never flickers between stages.
   const beacon = new THREE.Mesh(
     new THREE.CylinderGeometry(2.6, 2.6, 14, 20, 1, true),
     new THREE.MeshBasicMaterial({ color: 0xffd23c, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),

@@ -1,4 +1,6 @@
 // Save slots in localStorage: three named slots plus an autosave.
+// All four slots share one localStorage key and one JSON object, so a save
+// is a single setItem — there is never a half-written slot if the tab closes.
 // Stores money, respect, mission progress, owned weapons, garage cars
 // and the player's position. Loading restores the open world, not a replay.
 const KEY = 'solmar-bay-save';

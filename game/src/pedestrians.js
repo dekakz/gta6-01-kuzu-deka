@@ -66,6 +66,8 @@ export function createPedestrianManager(scene, world, random) {
   }
 
   // Hostile thugs / guards for fight stages: they chase and punch the player.
+  // They run at 3.2-4.2 u/s, roughly twice a walker's 1.2-2.4, so a fight
+  // stage closes distance on you while you aim — standing still is not free.
   function spawnHostile(x, z, count, opts = {}) {
     const out = [];
     for (let i = 0; i < count; i += 1) {
@@ -91,9 +93,12 @@ export function createPedestrianManager(scene, world, random) {
       const distPlayer = Math.hypot(dxp, dzp);
       if (gunfireAt && Math.hypot(ped.x - gunfireAt.x, ped.z - gunfireAt.z) < 30) ped.panic = 3;
       if (ped.hostile) {
-        // Chase the player and punch when close.
+        // Chase the player and punch when close. Stop at arm's length
+        // (1.2) instead of walking into the player: at distance 0 the
+        // player's shot ray starts inside the hostile's mesh and can
+        // never hit, and a hostile standing inside you looks broken.
         ped.heading = Math.atan2(-dxp, -dzp);
-        const step = Math.min(distPlayer, ped.speed * dt);
+        const step = Math.min(Math.max(0, distPlayer - 1.2), ped.speed * dt);
         ped.x += Math.sin(ped.heading) * step;
         ped.z += Math.cos(ped.heading) * step;
         ped.punchCooldown -= dt;

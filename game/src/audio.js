@@ -115,6 +115,8 @@ export function createAudio() {
       ng.connect(musicGain);
       noise.start(t + beat / 2);
     }
+    // Music is scheduled one bar at a time (a setTimeout per bar), so
+    // stopping the radio can only cut between bars, never mid-note.
     const barMs = beat * 4 * 1000;
     musicTimer = window.setTimeout(playBar, barMs);
   }

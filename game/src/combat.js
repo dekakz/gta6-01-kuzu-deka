@@ -23,6 +23,9 @@ export function createCombat(scene) {
   }
 
   // Shoot from `origin` along `direction`. Returns the thing hit, if any.
+  // The caller picks the origin height: main.js fires from torso height
+  // (y 1.05), because a horizontal ray at head height threads the gap
+  // between a ped's torso top and head and can never hit anything.
   function shoot(origin, direction, weaponKey, targets, policeUnits) {
     const weapon = WEAPONS[weaponKey];
     if (cooldown > 0 || !weapon) return null;
